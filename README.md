@@ -1,7 +1,7 @@
 # Chatbot nội bộ LLM + SQL (Qwen + LangChain + Flask)
 
 ## 1. Chuẩn bị
-- Tải model Qwen1.5-1.8B-Chat từ HuggingFace về thư mục `models/`
+- Tải model Qwen1.5-1.7B-Chat từ HuggingFace về thư mục `models/`
 - Cài Docker, Docker Compose
 
 ## 2. Khởi tạo database và sinh dữ liệu mẫu
