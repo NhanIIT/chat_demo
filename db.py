@@ -1,55 +1,45 @@
 import sqlite3
-from typing import List, Dict
-
-
-DB_PATH = "hr.db"
-
-
-def get_connection():
-    return sqlite3.connect(DB_PATH)
 
 
 def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        '''
-        CREATE TABLE IF NOT EXISTS employees (
+    conn = sqlite3.connect('hr.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            department TEXT NOT NULL,
-            position TEXT NOT NULL,
-            salary INTEGER
+            name TEXT,
+            department_id INTEGER,
+            email TEXT,
+            role_id INTEGER
         )
-        '''
-    )
-    # Thêm dữ liệu mẫu nếu bảng rỗng
-    cursor.execute('SELECT COUNT(*) FROM employees')
-    if cursor.fetchone()[0] == 0:
-        data = [
-            ("Nguyen Van A", "Kế toán", "Nhân viên", 12000000),
-            ("Tran Thi B", "Kế toán", "Trưởng phòng", 20000000),
-            ("Le Van C", "Nhân sự", "Nhân viên", 11000000),
-            ("Pham Thi D", "IT", "Lập trình viên", 15000000),
-            ("Hoang Van E", "IT", "Trưởng phòng", 22000000)
-        ]
-        sql_insert = (
-            'INSERT INTO employees (name, department, position, salary) '
-            'VALUES (?, ?, ?, ?)'
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS departments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
         )
-        cursor.executemany(sql_insert, data)
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS user_roles (
+            user_id INTEGER,
+            role_id INTEGER
+        )
+    ''')
     conn.commit()
     conn.close()
 
 
-def query_db(sql: str) -> List[Dict]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    columns = [desc[0] for desc in cursor.description]
-    rows = cursor.fetchall()
-    conn.close()
-    return [
-        dict(zip(columns, row))
-        for row in rows
-    ] 
+if __name__ == "__main__":
+    init_db()

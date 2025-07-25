@@ -1,0 +1,33 @@
+version: "3"
+services:
+  llm:
+    image: vllm/vllm-openai:latest
+    command: --model /models/Qwen3-1.7B
+    volumes:
+      - ./models:/models
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+  backend:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - llm
+    ports:
+      - "5000:5000"
+  gradio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python gradio_app.py
+    volumes:
+      - .:/app
+    depends_on:
+      - llm
+    ports:
+      - "7860:7860"

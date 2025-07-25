@@ -1,12 +1,11 @@
-from flask import Flask, request, jsonify
+import gradio as gr
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
+from langchain.prompts import ChatPromptTemplate
 
 # Metadata mô tả bảng
-# PEP8: break long lines
-
 table_metadata = {
     "users": (
         "Bảng lưu thông tin nhân sự: id, name (tên), department_id "
@@ -41,11 +40,17 @@ db = SQLDatabase.from_uri("sqlite:///hr.db")
 
 # Kết nối LLM Qwen qua OpenAI API (vLLM)
 llm = ChatOpenAI(
-    model="Qwen3-1.7B",
-    openai_api_base="http://llm:8000/v1",
+    model="Qwen1.5-1.8B-Chat",
+    openai_api_base=(
+        "http://llm:8000/v1"  # Nếu chạy docker-compose
+    ),
     openai_api_key="sk-xxx"
 )
 
+prompt = ChatPromptTemplate.from_messages([
+    ("system", system_prompt),
+    ("human", "{input}")
+])
 
 # Tạo agent
 agent = create_sql_agent(
@@ -55,24 +60,23 @@ agent = create_sql_agent(
     system_message=SystemMessage(content=system_prompt)
 )
 
-app = Flask(__name__)
 
-
-@app.route("/", methods=["GET"])
-def index():
-    return "Chatbot"
-
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.json
-    user_query = data.get("query", "")
+def chatbot(query):
     try:
-        result = agent.run(user_query)
-        return jsonify({"result": result})
+        result = agent.run(query)
+        return result
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return f"Lỗi: {str(e)}"
+
+
+demo = gr.Interface(
+    fn=chatbot,
+    inputs=gr.Textbox(lines=2, label="Nhập câu hỏi"),
+    outputs=gr.Textbox(lines=5, label="Trả lời"),
+    title="Chatbot",
+    description="Nhập câu hỏi về dữ liệu nhân sự, phòng ban, vai trò..."
+)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
